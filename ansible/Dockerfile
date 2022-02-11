@@ -18,16 +18,15 @@ USER admin:admin
 ENV PATH "/home/admin/.local/bin:$PATH"
 
 RUN \
-	python3 -m pip install --upgrade virtualenv pywinrm[kerberos] pywinrm
+	python3 -m pip install --user --upgrade pywinrm[kerberos] pywinrm
 
 ARG ANSIBLE_VERSION=latest
 RUN \
 	if [ "$ANSIBLE_VERSION" = "latest" ] ; then \
-		python3 -m pip install ansible ; \
+		python3 -m pip install --user ansible ; \
 	else \
-		python3 -m pip install ansible==$ANSIBLE_VERSION ; \
+		python3 -m pip install --user ansible==$ANSIBLE_VERSION ; \
 	fi
 
 ENTRYPOINT ["ansible"]
 CMD ["--help"]
-

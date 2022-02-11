@@ -5,4 +5,3 @@ if [[ -z $1 ]] ; then
 else
 	docker build . -t ansible:v$1 --build-arg ANSIBLE_VERSION=$1
 fi
-
