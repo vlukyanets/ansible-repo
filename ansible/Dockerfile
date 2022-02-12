@@ -14,6 +14,8 @@ RUN \
 RUN \
 	groupadd --gid 2000 admin && useradd -m --uid 2000 --gid 2000 admin
 
+COPY ./content/docker-entrypoint.sh /docker-entrypoint.sh
+
 USER admin:admin
 ENV PATH "/home/admin/.local/bin:$PATH"
 
@@ -28,5 +30,4 @@ RUN \
 		python3 -m pip install --user ansible==$ANSIBLE_VERSION ; \
 	fi
 
-ENTRYPOINT ["ansible"]
-CMD ["--help"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
