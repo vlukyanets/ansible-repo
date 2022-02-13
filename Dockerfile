@@ -6,7 +6,7 @@ ENV LANG C
 RUN \
 	apt-get update && \
 	apt-get install --no-install-recommends -y \
-		gcc libffi-dev \
+		gcc libffi-dev openssh-client sshpass \
 		python3 python3-pip libpython3-dev \
 		libkrb5-dev krb5-user && \
 	rm -rf /var/lib/apt/lists/*
@@ -30,4 +30,5 @@ RUN \
 		python3 -m pip install --user ansible==$ANSIBLE_VERSION ; \
 	fi
 
+WORKDIR /data
 ENTRYPOINT ["/docker-entrypoint.sh"]
