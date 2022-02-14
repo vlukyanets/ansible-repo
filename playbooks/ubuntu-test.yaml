@@ -1,0 +1,77 @@
+---
+- name: Upgrade existing packages
+  gather_facts: no
+  become: yes
+  hosts: all
+  tasks:
+    - name: Update packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+        cache_valid_time: 86400
+
+- name: Install development packages
+  gather_facts: no
+  become: yes
+  hosts: all
+  tasks:
+    - name: Install editors
+      ansible.builtin.apt:
+        pkg:
+          - nano
+          - vim
+          - neovim
+    - name: Install git
+      ansible.builtin.apt:
+        name: git
+    - name: Install base development packages
+      ansible.builtin.apt:
+        pkg:
+          - build-essential
+          - gcc
+          - make
+          - cmake
+          - ninja-build
+          - meson
+          - gdb
+
+- name: Install SNAP
+  gather_facts: no
+  become: yes
+  hosts: all
+  tasks:
+    - name: Install SNAP
+      ansible.builtin.apt:
+        name: snapd
+
+- name: Install Docker
+  gather_facts: no
+  become: yes
+  hosts: all
+  tasks:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        pkg:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+    - name: Download Docker GPG key
+      ansible.builtin.shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /tmp/docker-gpg-key"
+    - name: Unpack Docker GPG key
+      ansible.builtin.shell: "gpg --dearmor -o /tmp/docker-keyring /tmp/docker-gpg-key"
+    - name: Install Docker GPG key
+      ansible.builtin.shell: "mv -f /tmp/docker-keyring /usr/share/keyrings/docker-archive-keyring.gpg"
+    - name: Add Docker repositories
+      ansible.builtin.shell: "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null"
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+    - name: Test Docker
+      ansible.builtin.shell: "docker run --rm -it hello-world"
+    - name: Delete Docker test image
+      ansible.builtin.shell: "docker rmi hello-world"
