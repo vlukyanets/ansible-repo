@@ -32,6 +32,8 @@
           - ninja-build
           - gdb
           - snapd
+          - python3
+          - python3-pip
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Install Docker GPG key (Debian/Ubuntu)
@@ -62,6 +64,8 @@
           - ninja
           - gdb
           - docker
+          - python
+          - python-pip
       when: ansible_distribution == 'Archlinux'
 
     - name: Create AUR user (Arch Linux)
@@ -94,8 +98,16 @@
         state: started
         enabled: yes
 
+    - name: Install docker-py package
+      ansible.builtin.pip:
+        name: docker
+
     - name: Test Docker
-      ansible.builtin.shell: "docker run --rm -it hello-world:latest && docker rmi hello-world:latest"
+      community.docker.docker_container:
+        name: hello-world-ansible-test
+        image: hello-world:latest
+        state: present
+        auto_remove: yes
       changed_when: false
 
     - name: Install Visual Studio Code (Debian/Ubuntu)
