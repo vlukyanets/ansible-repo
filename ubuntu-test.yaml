@@ -56,14 +56,10 @@
           - curl
           - gnupg
           - lsb-release
-    - name: Download Docker GPG key
-      ansible.builtin.shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /tmp/docker-gpg-key"
-    - name: Unpack Docker GPG key
-      ansible.builtin.shell: "gpg --dearmor -o /tmp/docker-keyring /tmp/docker-gpg-key"
-    - name: Install Docker GPG key
-      ansible.builtin.shell: "mv -f /tmp/docker-keyring /usr/share/keyrings/docker-archive-keyring.gpg"
-    - name: Add Docker repositories
-      ansible.builtin.shell: "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null"
+    - name: Install Docker GPG key and repositories
+      ansible.builtin.script: ./scripts/add-docker-repo.sh
+      register: dockerscript
+      changed_when: "'GPG key and repository lists already exists' not in dockerscript.stdout"
     - name: Install Docker packages
       ansible.builtin.apt:
         update_cache: yes
@@ -72,6 +68,5 @@
           - docker-ce-cli
           - containerd.io
     - name: Test Docker
-      ansible.builtin.shell: "docker run --rm -it hello-world"
-    - name: Delete Docker test image
-      ansible.builtin.shell: "docker rmi hello-world"
+      ansible.builtin.shell: "docker run --rm -it hello-world:latest && docker rmi hello-world:latest"
+      changed_when: false
