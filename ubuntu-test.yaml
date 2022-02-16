@@ -70,3 +70,8 @@
     - name: Test Docker
       ansible.builtin.shell: "docker run --rm -it hello-world:latest && docker rmi hello-world:latest"
       changed_when: false
+    - name: Enable Docker service
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
