@@ -1,0 +1,114 @@
+---
+- name: Install packages
+  gather_facts: yes
+  become: yes
+  hosts: all
+  strategy: free
+  tasks:
+    - name: Update packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+        cache_valid_time: 86400
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Update packages (Arch Linux)
+      community.general.pacman:
+        update_cache: yes
+        upgrade: yes
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Install packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - build-essential
+          - htop
+          - neovim
+          - git
+          - gcc
+          - make
+          - cmake
+          - meson
+          - ninja-build
+          - gdb
+          - snapd
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Install Docker GPG key (Debian/Ubuntu)
+      ansible.builtin.script: ../scripts/add-docker-repo.sh
+      register: dockergpginstall
+      changed_when: "'GPG key and repository lists already exists' not in dockergpginstall.stdout"
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Install Docker (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Install packages (Arch Linux)
+      community.general.pacman:
+        name:
+          - base-devel
+          - htop
+          - neovim
+          - git
+          - gcc
+          - make
+          - cmake
+          - meson
+          - ninja
+          - gdb
+          - docker
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Create AUR user (Arch Linux)
+      ansible.builtin.user:
+        name: aur_builder
+        create_home: yes
+        group: wheel
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Allow AUR user to run pacman via sudo without password (Arch Linux)
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/11-install-aur_builder
+        line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+        create: yes
+        validate: 'visudo -cf %s'
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Install YAY (Arch Linux)
+      become: yes
+      become_user: aur_builder
+      kewlfft.aur.aur:
+        name: yay
+        use: makepkg
+        state: present
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Enable services
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Test Docker
+      ansible.builtin.shell: "docker run --rm -it hello-world:latest && docker rmi hello-world:latest"
+      changed_when: false
+
+    - name: Install Visual Studio Code (Debian/Ubuntu)
+      ansible.builtin.shell: snap install --classic code
+      register: vscodesnapinstall
+      changed_when: "'is already installed' not in vscodesnapinstall.stderr"
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Install Visual Studio Code (Arch Linux)
+      become: yes
+      become_user: aur_builder
+      kewlfft.aur.aur:
+        name: visual-studio-code-bin
+        use: yay
+        state: present
+      when: ansible_distribution == 'Archlinux'
