@@ -1,7 +1,7 @@
 ---
 - name: Install packages
-  gather_facts: yes
-  become: yes
+  gather_facts: true
+  become: true
   hosts: all
   strategy: free
   tasks:
@@ -22,6 +22,8 @@
       ansible.builtin.apt:
         name:
           - build-essential
+          - net-tools
+          - curl
           - htop
           - neovim
           - git
@@ -44,6 +46,7 @@
 
     - name: Install Docker (Debian/Ubuntu)
       ansible.builtin.apt:
+        update_cache: yes
         name:
           - docker-ce
           - docker-ce-cli
@@ -54,6 +57,8 @@
       community.general.pacman:
         name:
           - base-devel
+          - net-tools
+          - curl
           - htop
           - neovim
           - git
@@ -80,11 +85,14 @@
         path: /etc/sudoers.d/11-install-aur_builder
         line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
         create: yes
+        mode: 0644
+        owner: root
+        group: root
         validate: 'visudo -cf %s'
       when: ansible_distribution == 'Archlinux'
 
     - name: Install YAY (Arch Linux)
-      become: yes
+      become: true
       become_user: aur_builder
       kewlfft.aur.aur:
         name: yay
@@ -98,7 +106,7 @@
         state: started
         enabled: yes
 
-    - name: Install docker-py package
+    - name: Install Python package 'docker'
       ansible.builtin.pip:
         name: docker
 
@@ -111,13 +119,13 @@
       changed_when: false
 
     - name: Install Visual Studio Code (Debian/Ubuntu)
-      ansible.builtin.shell: snap install --classic code
+      ansible.builtin.command: snap install --classic code
       register: vscodesnapinstall
       changed_when: "'is already installed' not in vscodesnapinstall.stderr"
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Install Visual Studio Code (Arch Linux)
-      become: yes
+      become: true
       become_user: aur_builder
       kewlfft.aur.aur:
         name: visual-studio-code-bin
