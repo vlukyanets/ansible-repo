@@ -13,6 +13,17 @@
   hosts: all
   gather_facts: true
   tasks:
+    - name: Add Java 8 repository key (Debian)
+      ansible.builtin.apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: C2518248EEA14886
+
+    - name: Add Java 8 repository (Debian)
+      ansible.builtin.apt_repository:
+        repo: deb http://security.debian.org/debian-security stretch/updates main
+        state: present
+      when: ansible_distribution == 'Debian'
+
     - name: Install prerequisites
       ansible.builtin.apt:
         update_cache: true
@@ -20,15 +31,18 @@
           - curl
           - apt-transport-https
           - openjdk-8-jdk
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Install Cassandra DB repository GPG key
+      ansible.builtin.apt_key:
+        url: https://www.apache.org/dist/cassandra/KEYS
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 
     - name: Add Cassandra DB repository
       ansible.builtin.apt_repository:
         repo: deb http://www.apache.org/dist/cassandra/debian 40x main
         state: present
-
-    - name: Install Cassandra DB repository GPG key
-      ansible.builtin.apt_key:
-        url: https://www.apache.org/dist/cassandra/KEYS
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
 
     - name: Install Cassandra DB
       ansible.builtin.apt:
@@ -45,10 +59,10 @@
         backup: true
       loop:
         - { regexp: '^(.*)cluster_name:', line: "cluster_name: 'Test Cluster configured by Ansible'" }
-        - { regexp: '^(.*)num_tokens:', line: 'num_tokens: 256' }
+        - { regexp: '^(.*)num_tokens:', line: 'num_tokens: 16' }
         - { regexp: '^(.*)- seeds:', line: '\1- seeds: {{ hostvars["localhost"].seed_string }}' }
         - { regexp: '^(.*)listen_address:', line: 'listen_address: {{ ansible_host }}' }
-        - { regexp: '^(.*)rpc_address:', line: 'rpc_address: localhost' }
+        - { regexp: '^(.*)(?<!broadcast_)rpc_address:', line: 'rpc_address: 0.0.0.0' }
         - { regexp: '^(.*)broadcast_rpc_address:', line: 'broadcast_rpc_address: {{ ansible_host }}' }
         - { regexp: '^(.*)endpoint_snitch:', line: 'endpoint_snitch: GossipingPropertyFileSnitch' }
 
