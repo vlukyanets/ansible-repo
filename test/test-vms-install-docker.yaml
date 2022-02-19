@@ -20,8 +20,6 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
-          - python3
-          - python3-pip
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Install Docker (Arch Linux)
@@ -30,8 +28,6 @@
         name:
           - docker
           - containerd
-          - python
-          - python-pip
       when: ansible_distribution == 'Archlinux'
 
     - name: Enable Docker service
@@ -39,8 +35,3 @@
         name: docker
         state: started
         enabled: yes
-
-    - name: Install Python package 'docker'
-      ansible.builtin.pip:
-        name: docker
-        state: present
