@@ -12,7 +12,7 @@
         name:
           - cassandra
 
-    - name: Delete config folder
+    - name: Delete config & data folders
       ansible.builtin.file:
         state: absent
         path: "{{ item.path }}"

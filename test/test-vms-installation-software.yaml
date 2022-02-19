@@ -38,21 +38,6 @@
           - python3-pip
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: Install Docker GPG key (Debian/Ubuntu)
-      ansible.builtin.script: ../scripts/add-docker-repo.sh
-      register: dockergpginstall
-      changed_when: "'GPG key and repository lists already exists' not in dockergpginstall.stdout"
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
-    - name: Install Docker (Debian/Ubuntu)
-      ansible.builtin.apt:
-        update_cache: yes
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
     - name: Install packages (Arch Linux)
       community.general.pacman:
         name:
@@ -68,7 +53,6 @@
           - meson
           - ninja
           - gdb
-          - docker
           - python
           - python-pip
       when: ansible_distribution == 'Archlinux'
@@ -99,24 +83,6 @@
         use: makepkg
         state: present
       when: ansible_distribution == 'Archlinux'
-
-    - name: Enable services
-      ansible.builtin.systemd:
-        name: docker
-        state: started
-        enabled: yes
-
-    - name: Install Python package 'docker'
-      ansible.builtin.pip:
-        name: docker
-
-    - name: Test Docker
-      community.docker.docker_container:
-        name: hello-world-ansible-test
-        image: hello-world:latest
-        state: present
-        auto_remove: yes
-      changed_when: false
 
     - name: Install Visual Studio Code (Debian/Ubuntu)
       ansible.builtin.command: snap install --classic code

@@ -1,0 +1,9 @@
+---
+- name: Reboot machines
+  gather_facts: false
+  strategy: free
+  hosts: all
+  become: true
+  tasks:
+    - name: Reboot
+      ansible.builtin.reboot:

@@ -1,0 +1,46 @@
+---
+- name: Install Docker
+  gather_facts: true
+  become: true
+  hosts: all
+  strategy: free
+  tasks:
+    - name: Install Docker GPG key (Debian/Ubuntu)
+      ansible.builtin.script: ../scripts/add-docker-repo.sh {{ ansible_distribution | lower }}
+      register: dockergpginstall
+      changed_when: "'GPG key and repository lists already exists' not in dockergpginstall.stdout"
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Install Docker (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+        state: present
+        name:
+          - docker
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - python3
+          - python3-pip
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Install Docker (Arch Linux)
+      community.general.pacman:
+        state: present
+        name:
+          - docker
+          - containerd
+          - python
+          - python-pip
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Enable Docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install Python package 'docker'
+      ansible.builtin.pip:
+        name: docker
+        state: present
