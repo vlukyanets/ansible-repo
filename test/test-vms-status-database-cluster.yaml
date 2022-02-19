@@ -8,6 +8,7 @@
       ansible.builtin.command: nodetool status
       register: nodetool
       changed_when: false
+
     - name: Print status of Cassandra cluster
       ansible.builtin.debug:
         verbosity: 0
