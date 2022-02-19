@@ -1,0 +1,21 @@
+---
+- name: Delete Cassandra DB package
+  become: true
+  hosts: all
+  gather_facts: no
+  strategy: free
+  tasks:
+    - name: Delete Cassandra DB package
+      ansible.builtin.apt:
+        state: absent
+        purge: true
+        name:
+          - cassandra
+
+    - name: Delete config folder
+      ansible.builtin.file:
+        state: absent
+        path: "{{ item.path }}"
+      loop:
+        - { path: '/etc/cassandra' }
+        - { path: '/var/lib/cassandra' }

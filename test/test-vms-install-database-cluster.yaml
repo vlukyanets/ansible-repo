@@ -1,0 +1,69 @@
+---
+- name: Pre-setup Cassandra DB cluster
+  become: false
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get seeds string for Cassandra config
+      ansible.builtin.set_fact:
+        seed_string: "{{ groups['all'] | map('extract', hostvars) | selectattr('cassandra_is_seed', 'defined') | selectattr('cassandra_is_seed', '==', true) | map(attribute='ansible_host') | list | unique | join(',') }}"
+
+- name: Setup Cassandra DB cluster
+  become: true
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - curl
+          - apt-transport-https
+          - openjdk-8-jdk
+
+    - name: Add Cassandra DB repository
+      ansible.builtin.apt_repository:
+        repo: deb http://www.apache.org/dist/cassandra/debian 40x main
+        state: present
+
+    - name: Install Cassandra DB repository GPG key
+      ansible.builtin.apt_key:
+        url: https://www.apache.org/dist/cassandra/KEYS
+
+    - name: Install Cassandra DB
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - cassandra
+
+    - name: Configure Cassandra DB cluster
+      ansible.builtin.lineinfile:
+        path: /etc/cassandra/cassandra.yaml
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backrefs: true
+        backup: true
+      loop:
+        - { regexp: '^(.*)cluster_name:', line: "cluster_name: 'Test Cluster configured by Ansible'" }
+        - { regexp: '^(.*)num_tokens:', line: 'num_tokens: 256' }
+        - { regexp: '^(.*)- seeds:', line: '\1- seeds: {{ hostvars["localhost"].seed_string }}' }
+        - { regexp: '^(.*)listen_address:', line: 'listen_address: {{ ansible_host }}' }
+        - { regexp: '^(.*)rpc_address:', line: 'rpc_address: localhost' }
+        - { regexp: '^(.*)broadcast_rpc_address:', line: 'broadcast_rpc_address: {{ ansible_host }}' }
+        - { regexp: '^(.*)endpoint_snitch:', line: 'endpoint_snitch: GossipingPropertyFileSnitch' }
+
+    - name: Configure Cassandra DB memory usage
+      ansible.builtin.lineinfile:
+        path: /etc/cassandra/cassandra-env.sh
+        backup: true
+        regex: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^#MAX_HEAP_SIZE=', line: 'MAX_HEAP_SIZE=512m' }
+        - { regexp: '^#HEAP_NEWSIZE=', line: 'HEAP_NEWSIZE=256m' }
+
+    - name: Enable Cassandra DB
+      ansible.builtin.systemd:
+        name: cassandra
+        state: restarted
+        enabled: true

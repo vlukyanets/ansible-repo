@@ -1,0 +1,15 @@
+---
+- name: Get status of Cassandra cluster
+  become: false
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Get status of Cassandra cluster
+      ansible.builtin.command: nodetool status
+      register: nodetool
+      changed_when: false
+    - name: Print status of Cassandra cluster
+      ansible.builtin.debug:
+        verbosity: 0
+        var: "nodetool.stdout_lines"
+      throttle: 1
