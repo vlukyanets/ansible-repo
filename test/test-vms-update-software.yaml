@@ -2,10 +2,16 @@
 - name: Update software
   become: true
   hosts: all
-  gather_facts: false
+  gather_facts: true
   strategy: free
   tasks:
-    - name: Update software
+    - name: Update software (Debian/Ubuntu)
       ansible.builtin.apt:
         update_cache: true
         upgrade: true
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Update software (Arch Linux)
+      community.general.pacman:
+        upgrade: true
+      when: ansible_distribution == 'Archlinux'

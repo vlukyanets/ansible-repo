@@ -10,7 +10,7 @@
         name: docker
         state: stopped
         enabled: no
-      ignore_errors: true
+      failed_when: false
 
     - name: Delete Docker packages (Debian/Ubuntu)
       ansible.builtin.apt:
