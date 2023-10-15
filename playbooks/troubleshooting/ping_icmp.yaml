@@ -1,0 +1,55 @@
+---
+- name: Check network availability by ICMP
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Ping hosts
+      command: ping -c 4 {{ hostvars[item].ansible_host }}
+      loop: "{{ groups['all'] }}"
+      register: ping_results
+      changed_when: false
+      failed_when: false
+
+    - name: Generate file name for ping results
+      tempfile:
+        state: file
+        prefix: ping_results_
+        suffix: .txt
+      register: ping_results_filename
+      changed_when: false
+
+    - name: Generate ping results table
+      template:
+        src: ping_icmp_results.j2
+        dest: "{{ ping_results_filename.path }}"
+      delegate_to: localhost
+
+    - name: Save ping results filename in facts
+      set_fact:
+        ping_results_filename: "{{ ping_results_filename.path }}"
+
+- name: Display ping results
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Read table content
+      command: cat "{{ ping_results_filename }}"
+      register: table_content
+      changed_when: false
+
+    - name: Show table
+      debug:
+        var: table_content.stdout_lines
+      changed_when: false
+
+- name: Delete results file
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Delete ping results file
+      file:
+        path: "{{ ping_results_filename }}"
+        state: absent

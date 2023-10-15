@@ -1,0 +1,7 @@
+┌--------------------┬-------------┐
+| Host               | Status      |
+├--------------------┼-------------┤
+{% for line in ping_results.results %}
+| {{ "{:<18}".format(line.item) }} | {{ "{:<11}".format("OK" if " 0% packet loss" in line.stdout else "Unavailable" if "100% packet loss" in line.stdout else "Unstable") }} |
+{% endfor %}
+└--------------------┴-------------┘
